@@ -1,0 +1,71 @@
+pipeline {
+    agent any
+
+    environment {
+        PYTHON = 'python3'
+        PIP = 'pip3'
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    // Install dependencies
+                    echo 'Installing dependencies...'
+                    sh """
+                    ${PIP} install -r requirements.txt
+                    """
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                script {
+                    // Run tests using pytest
+                    echo 'Running tests...'
+                    sh """
+                    ${PYTHON} -m pytest
+                    """
+                }
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                // Only deploy if tests pass
+                branch 'main'
+            }
+            steps {
+                script {
+                    echo 'Deploying to staging environment...'
+                    sh """
+                    # Example: Deploy with Flask
+                    ${PYTHON} api.py &
+                    """
+                }
+            }
+        }
+    }
+
+   post {
+    always {
+        echo 'Cleaning up...'
+    }
+
+    success {
+        echo 'Build and test successful! Deploying to staging.'
+        mail to: 'vullagantivenkatesh@gmail.com@example.com',
+             subject: "Build Successful: ${currentBuild.fullDisplayName}",
+             body: "The build was successful and deployed to staging."
+    }
+
+    failure {
+        echo 'Build or tests failed. Not deploying.'
+        mail to: 'vullagantivenkatesh@gmail.com@example.com',
+             subject: "Build Failed: ${currentBuild.fullDisplayName}",
+             body: "The build or tests failed. Please check the logs."
+    }
+}
+
+}
